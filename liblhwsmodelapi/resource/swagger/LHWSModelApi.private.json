@@ -1,0 +1,37 @@
+{
+    "openapi":  "3.0.0",
+    "info":
+    {
+        "title":        "LHWSModelApi",
+        "description":  "LHWSModelApi",
+        "version":      "1.0.0"
+    },
+    "servers":
+    {
+    },
+    "paths":
+    {
+    },
+    "components":
+    {
+        "schemas":
+        {
+            "ApiError":
+            {
+                "description": "error response",
+                "type": "object",
+                "properties":
+                {
+                    "errorMessage":
+                    {
+                        "type": "string"
+                    },
+                    "errorCode":
+                    {
+                        "type": "integer"
+                    }
+                }
+            }
+        }
+    }
+}

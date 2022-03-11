@@ -1,2 +1,2 @@
 # lhwsmodelapi
-Web model and api
+Web model and api integration

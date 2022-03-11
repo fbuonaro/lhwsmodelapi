@@ -31,7 +31,7 @@ namespace LHWSModelApiImplNS
             ApiContextFactory();
             ~ApiContextFactory();
 
-            const std::unique_ptr< LHWSModelApiNS::IApiContext > CreateApiContext(
+            std::unique_ptr< LHWSModelApiNS::IApiContext > CreateApiContext(
                 cppcms::application& cppcmsApplication,
                 const LHWSModelApiNS::GetApiContextParams& params ) const;
     };

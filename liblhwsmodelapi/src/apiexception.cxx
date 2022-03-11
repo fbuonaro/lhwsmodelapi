@@ -14,12 +14,12 @@ namespace LHWSModelApiNS
         apiError.errorMessage = std::move( errorMessage );
     }
 
-    const char* ApiError::what() const throw()
+    const char* ApiException::what() const throw()
     {
-        return apiError.c_str();
+        return apiError.errorMessage.c_str();
     }
 
-    const ApiError& GetApiError() const throw()
+    const ApiError& ApiException::GetApiError() const throw()
     {
         return apiError;
     }

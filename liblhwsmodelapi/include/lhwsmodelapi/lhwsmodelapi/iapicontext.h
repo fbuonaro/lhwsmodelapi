@@ -44,8 +44,8 @@ namespace LHWSModelApiNS
             IApiContextFactory();
             virtual ~IApiContextFactory();
 
-            virtual const std::unique_ptr< IApiContext > CreateApiContext( cppcms::application& cppcmsApplication,
-                                                                           const GetApiContextParams& params ) const = 0;
+            virtual std::unique_ptr< IApiContext > CreateApiContext( cppcms::application& cppcmsApplication,
+                                                                     const GetApiContextParams& params ) const = 0;
     };
 
     std::unique_ptr< LHWSUtilNS::IValidJwt > GetJwt( cppcms::http::request& cppcmsRequest, CheckJwt checkJwt );

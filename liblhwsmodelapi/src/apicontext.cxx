@@ -19,7 +19,7 @@ namespace LHWSModelApiImplNS
         return ( jwt ? true : false );
     }
 
-    const LHWSUtilNS::IValidJwt& GetValidJwt() const
+    const LHWSUtilNS::IValidJwt& ApiContext::GetValidJwt() const
     {
         if( !( jwt ) )
         {
@@ -29,7 +29,7 @@ namespace LHWSModelApiImplNS
         return *jwt;
     }
 
-    void SetValidJwt( std::unique_ptr< LHWSUtilNS::IValidJwt > _jwt )
+    void ApiContext::SetValidJwt( std::unique_ptr< LHWSUtilNS::IValidJwt > _jwt )
     {
         if( jwt )
         {
@@ -53,7 +53,7 @@ namespace LHWSModelApiImplNS
     {
     }
 
-    const std::unique_ptr< LHWSModelApiNS::IApiContext > CreateApiContext(
+    std::unique_ptr< LHWSModelApiNS::IApiContext > ApiContextFactory::CreateApiContext(
         cppcms::application& cppcmsApplication,
         const LHWSModelApiNS::GetApiContextParams& params ) const
     {
@@ -65,7 +65,7 @@ namespace LHWSModelApiImplNS
         
         apiContext->SetValidJwt( GetJwt( cppcmsApplication.request(), params.checkJwt ) );
 
-        return apiContext;
+        return std::move( apiContext );
     }
 }
 

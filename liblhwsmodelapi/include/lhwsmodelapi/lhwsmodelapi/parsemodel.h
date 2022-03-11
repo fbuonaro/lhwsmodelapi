@@ -9,6 +9,7 @@
 #include <cppcms/http_response.h>
 
 #include <rapidjson/document.h>
+#include <rapidjson/error/en.h>
 
 #include <lhmodelutil/lhmodel_rapidjson.h>
 
@@ -20,7 +21,7 @@ namespace LHWSModelApiNS
         public:
             static T FromJsonStr( const std::string& requestParamJsonStr );
 
-            static T FromReqJsonParam( cppcms::http::request& cppcmsRequest
+            static T FromReqJsonParam( cppcms::http::request& cppcmsRequest,
                                        bool isGet,
                                        const std::string& paramName );
 
@@ -35,7 +36,7 @@ namespace LHWSModelApiNS
         rapidjson::ParseResult parsedOkay;
         std::ostringstream oss;
 
-        parsedOkay = requestParamJson.Parse( requestParamJson.c_str() );
+        parsedOkay = requestParamJson.Parse( requestParamJsonStr.c_str() );
         if( !( parsedOkay ) )
         {
             oss << "JSON parse error: " << rapidjson::GetParseError_En( parsedOkay.Code() ) << " " << parsedOkay.Offset();
@@ -84,15 +85,14 @@ namespace LHWSModelApiNS
         rapidjson::StringBuffer jsonStrBuffer;
         rapidjson::Writer< rapidjson::StringBuffer > jsonWriter( jsonStrBuffer );
         
-        LHModelUtilNS::SerializeModel( jsonStrBuffer, exD );
+        LHModelUtilNS::SerializeModel( jsonStrBuffer, responseModel );
 
-        if( jsonStr.GetLength() <= 0 )
+        if( !( jsonStrBuffer.GetString() ) )
         {
             throw ApiException( 2, "Failed to serialize response as JSON" );
         }
 
-        std::string jsonStr( jsonStrBuffer.GetString(), jsonStrBuffer.GetLength() );
-        cppcmsResponse.out() << jsonStr;
+        cppcmsResponse.out() << jsonStrBuffer.GetString();
     }
 }
 

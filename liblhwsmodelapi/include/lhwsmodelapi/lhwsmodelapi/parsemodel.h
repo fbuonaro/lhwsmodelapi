@@ -85,7 +85,7 @@ namespace LHWSModelApiNS
         rapidjson::StringBuffer jsonStrBuffer;
         rapidjson::Writer< rapidjson::StringBuffer > jsonWriter( jsonStrBuffer );
         
-        LHModelUtilNS::SerializeModel( jsonStrBuffer, responseModel );
+        LHModelUtilNS::SerializeModel( jsonWriter, responseModel );
 
         if( !( jsonStrBuffer.GetString() ) )
         {

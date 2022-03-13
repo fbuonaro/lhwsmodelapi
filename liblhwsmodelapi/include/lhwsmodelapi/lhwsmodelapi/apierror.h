@@ -1,6 +1,7 @@
 #ifndef __LHWSModelApiNS_ApiError_lhmodel_H__
 #define __LHWSModelApiNS_ApiError_lhmodel_H__
 
+#include <cstdint>
 #include <string>
 
 #include <lhmodel/membermeta.h>
@@ -30,7 +31,7 @@ namespace LHModelNS
         public:
             static constexpr std::array< MemberMeta, 2 > membersMeta{ {
                 MemberMeta( "errorMessage", "std::string", "" ),
-                MemberMeta( "errorCode", "signed long long int", "" ) } };
+                MemberMeta( "errorCode", "std::int64_t", "" ) } };
 
             static const std::unordered_map< std::string, size_t > memberIndex;
     };
@@ -111,7 +112,7 @@ namespace LHWSModelApiNS
             }
 
             std::string errorMessage;
-            signed long long int errorCode;
+            std::int64_t errorCode;
     };
 }
 

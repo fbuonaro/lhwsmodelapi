@@ -28,7 +28,8 @@
                     },
                     "errorCode":
                     {
-                        "type": "integer"
+                        "type": "integer",
+                        "format": "int64"
                     }
                 }
             }

@@ -40,6 +40,7 @@ add_library( lhwsmodelapi SHARED
 target_link_libraries( lhwsmodelapi
     PUBLIC
         "${Boost_LIBRARIES}"
+        lhmiscutil
         lhmodel
         lhmodelutil
         lhwsutil

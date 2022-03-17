@@ -16,7 +16,7 @@ namespace LHWSModelApiNS
     class ApiRequestModelContext
     {
         public:
-            ~ApiRequestModelContext();
+            ApiRequestModelContext( T _requestModel, std::unique_ptr< IApiContext > _context );
 
             const T& GetRequestModel() const;
 
@@ -26,16 +26,10 @@ namespace LHWSModelApiNS
                                                                 const GetApiContextParams& params );
 
         private:
-            ApiRequestModelContext( T _requestModel, std::unique_ptr< IApiContext > _context );
 
             T requestModel;
             std::unique_ptr< IApiContext > context;
     };
-
-    template< class T >
-    ApiRequestModelContext< T >::~ApiRequestModelContext()
-    {
-    }
 
     template< class T >
     const T& ApiRequestModelContext< T >::GetRequestModel() const

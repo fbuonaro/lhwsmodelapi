@@ -65,13 +65,25 @@ namespace LHWSModelApiNS
         }
         else
         {
-            requestParamJsonStr = cppcmsRequest.post( paramName );
+            if( paramName.empty() )
+            {
+                auto rawPostData( cppcmsRequest.raw_post_data() );
+
+                if( rawPostData.first && rawPostData.second )
+                {
+                    requestParamJsonStr.assign( static_cast< char* >( rawPostData.first ), rawPostData.second );
+                }
+            }
+            else
+            {
+                requestParamJsonStr = cppcmsRequest.post( paramName );
+            }
         }
 
         if( requestParamJsonStr.empty() )
         {
             std::ostringstream oss;
-            oss << "Missing " << ( isGet ? "GET" : "POST" ) << "parameter[" << paramName << "]";
+            oss << "Missing " << ( isGet ? "GET" : "POST" ) << " parameter[" << paramName << "]";
             throw ApiException( 1, oss.str() );
         }
 

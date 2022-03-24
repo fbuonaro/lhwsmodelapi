@@ -98,6 +98,11 @@ install( DIRECTORY "${LIB_INC_DIR}/lhwsmodelapi/lhwsmodelapi"
          COMPONENT lhwsmodelapi
          FILES_MATCHING PATTERN "*.h" )
 
+install( DIRECTORY "resource/swagger/lhwsmodelapi"
+         DESTINATION etc/swagger
+         COMPONENT lhwsmodelapi
+         FILES_MATCHING PATTERN "*.json" )
+
 ADD_CUSTOM_TARGET( install-lhwsmodelapi
                    ${CMAKE_COMMAND}
                    -D "CMAKE_INSTALL_COMPONENT=lhwsmodelapi"

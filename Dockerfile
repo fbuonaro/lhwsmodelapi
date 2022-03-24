@@ -150,7 +150,7 @@ LABEL lhwsmodelapi-stage-test-env="yes"
 LABEL lhwsmodelapi-stage-main="no"
 
 RUN cd /lhwsmodelapi/build && \
-    make install
+    make install-lhwsmodelapi
 RUN ldconfig
 
 ##################################################################################
@@ -167,7 +167,7 @@ LABEL lhwsmodelapi-stage-main="yes"
 COPY --from=lhwsmodelapi-s2-build /usr/ /usr/
 COPY --from=lhwsmodelapi-s2-build /lhwsmodelapi/ /lhwsmodelapi/
 RUN cd /lhwsmodelapi/build && \
-    make install && \
+    make install-lhwsmodelapi && \
     cd / && \
     rm -rf /lhwsmodelapi && \
     rm -rf /lhmiscutil && \

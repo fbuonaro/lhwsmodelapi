@@ -5,8 +5,8 @@
 namespace LHWSModelApiImplNS
 {
     ApiContext::ApiContext()
-    :   LHWSModelApiNS::IApiContext()
-    ,   jwt()
+        : LHWSModelApiNS::IApiContext()
+        , jwt()
     {
     }
 
@@ -21,9 +21,9 @@ namespace LHWSModelApiImplNS
 
     const LHWSUtilNS::IValidJwt& ApiContext::GetValidJwt() const
     {
-        if( !( jwt ) )
+        if ( !( jwt ) )
         {
-            throw std::runtime_error( "jwt is not null" );
+            throw std::runtime_error( "jwt is null" );
         }
 
         return *jwt;
@@ -31,12 +31,12 @@ namespace LHWSModelApiImplNS
 
     void ApiContext::SetValidJwt( std::unique_ptr< LHWSUtilNS::IValidJwt > _jwt )
     {
-        if( jwt )
+        if ( jwt )
         {
             throw std::runtime_error( "jwt is already set" );
         }
 
-        if( !( _jwt ) )
+        if ( !( _jwt ) )
         {
             return;
         }
@@ -45,7 +45,7 @@ namespace LHWSModelApiImplNS
     }
 
     ApiContextFactory::ApiContextFactory()
-    :   LHWSModelApiNS::IApiContextFactory()
+        : LHWSModelApiNS::IApiContextFactory()
     {
     }
 
@@ -58,11 +58,11 @@ namespace LHWSModelApiImplNS
         const LHWSModelApiNS::GetApiContextParams& params ) const
     {
         std::unique_ptr< ApiContext > apiContext( new ApiContext() );
-        if( !( apiContext ) )
+        if ( !( apiContext ) )
         {
             throw std::runtime_error( "failed to create api context" );
         }
-        
+
         apiContext->SetValidJwt( GetJwt( cppcmsApplication.request(), params.checkJwt ) );
 
         return std::move( apiContext );

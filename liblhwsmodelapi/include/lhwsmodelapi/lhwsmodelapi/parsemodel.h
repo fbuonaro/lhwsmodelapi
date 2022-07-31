@@ -18,15 +18,15 @@ namespace LHWSModelApiNS
     template< class T >
     class ParseModel
     {
-        public:
-            static T FromJsonStr( const std::string& requestParamJsonStr );
+    public:
+        static T FromJsonStr( const std::string& requestParamJsonStr );
 
-            static T FromReqJsonParam( cppcms::http::request& cppcmsRequest,
-                                       bool isGet,
-                                       const std::string& paramName );
+        static T FromReqJsonParam( cppcms::http::request& cppcmsRequest,
+            bool isGet,
+            const std::string& paramName );
 
-            static void IntoRespAsJsonStr( cppcms::http::response& cppcmsResponse,
-                                           const T& responseModel );
+        static void IntoRespAsJsonStr( cppcms::http::response& cppcmsResponse,
+            const T& responseModel );
     };
 
     template< class T >
@@ -37,14 +37,14 @@ namespace LHWSModelApiNS
         std::ostringstream oss;
 
         parsedOkay = requestParamJson.Parse( requestParamJsonStr.c_str() );
-        if( !( parsedOkay ) )
+        if ( !( parsedOkay ) )
         {
             oss << "JSON parse error: " << rapidjson::GetParseError_En( parsedOkay.Code() ) << " " << parsedOkay.Offset();
             throw ApiException( 1, oss.str() );
         }
 
         T requestModel;
-        if( !( LHModelUtilNS::DeserializeValue( requestModel, requestParamJson, &oss, true ) ) )
+        if ( !( LHModelUtilNS::DeserializeValue( requestModel, requestParamJson, &oss, true ) ) )
         {
             throw ApiException( 1, oss.str() );
         }
@@ -54,24 +54,24 @@ namespace LHWSModelApiNS
 
     template< class T >
     T ParseModel< T >::FromReqJsonParam( cppcms::http::request& cppcmsRequest,
-                                         bool isGet,
-                                         const std::string& paramName )
+        bool isGet,
+        const std::string& paramName )
     {
         std::string requestParamJsonStr;
 
-        if( isGet )
+        if ( isGet )
         {
             requestParamJsonStr = cppcmsRequest.get( paramName );
         }
         else
         {
-            if( paramName.empty() )
+            if ( paramName.empty() )
             {
                 auto rawPostData( cppcmsRequest.raw_post_data() );
 
-                if( rawPostData.first && rawPostData.second )
+                if ( rawPostData.first && rawPostData.second )
                 {
-                    requestParamJsonStr.assign( static_cast< char* >( rawPostData.first ), rawPostData.second );
+                    requestParamJsonStr.assign( static_cast<char*>( rawPostData.first ), rawPostData.second );
                 }
             }
             else
@@ -80,7 +80,7 @@ namespace LHWSModelApiNS
             }
         }
 
-        if( requestParamJsonStr.empty() )
+        if ( requestParamJsonStr.empty() )
         {
             std::ostringstream oss;
             oss << "Missing " << ( isGet ? "GET" : "POST" ) << " parameter[" << paramName << "]";
@@ -92,18 +92,19 @@ namespace LHWSModelApiNS
 
     template< class T >
     void ParseModel< T >::IntoRespAsJsonStr( cppcms::http::response& cppcmsResponse,
-                                             const T& responseModel )
+        const T& responseModel )
     {
         rapidjson::StringBuffer jsonStrBuffer;
         rapidjson::Writer< rapidjson::StringBuffer > jsonWriter( jsonStrBuffer );
-        
+
         LHModelUtilNS::SerializeModel( jsonWriter, responseModel );
 
-        if( !( jsonStrBuffer.GetString() ) )
+        if ( !( jsonStrBuffer.GetString() ) )
         {
             throw ApiException( 2, "Failed to serialize response as JSON" );
         }
 
+        cppcmsResponse.content_type( "application/json" );
         cppcmsResponse.out() << jsonStrBuffer.GetString();
     }
 }

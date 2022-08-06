@@ -13,6 +13,8 @@
 
 #include <lhmodelutil/lhmodel_rapidjson.h>
 
+#include <lhwsutil/logging.h>
+
 namespace LHWSModelApiNS
 {
     template< class T >
@@ -32,6 +34,11 @@ namespace LHWSModelApiNS
     template< class T >
     T ParseModel< T >::FromJsonStr( const std::string& requestParamJsonStr )
     {
+        std::ostringstream scopeOss;
+        scopeOss << "ParseModel<" << LHModelNS::GetModelMeta< T >().name << ">.FromJsonStr";
+        std::string scopeStr( scopeOss.str() );
+        wsUtilLogSetScope( scopeStr.c_str() );
+
         rapidjson::Document requestParamJson;
         rapidjson::ParseResult parsedOkay;
         std::ostringstream oss;
@@ -40,13 +47,15 @@ namespace LHWSModelApiNS
         if ( !( parsedOkay ) )
         {
             oss << "JSON parse error: " << rapidjson::GetParseError_En( parsedOkay.Code() ) << " " << parsedOkay.Offset();
-            throw ApiException( 1, oss.str() );
+            wsUtilLogError( oss.str() );
+            throw ApiException( 400, oss.str() );
         }
 
         T requestModel;
         if ( !( LHModelUtilNS::DeserializeValue( requestModel, requestParamJson, &oss, true ) ) )
         {
-            throw ApiException( 1, oss.str() );
+            wsUtilLogError( oss.str() );
+            throw ApiException( 400, oss.str() );
         }
 
         return requestModel;
@@ -57,6 +66,11 @@ namespace LHWSModelApiNS
         bool isGet,
         const std::string& paramName )
     {
+        std::ostringstream scopeOss;
+        scopeOss << "ParseModel<" << LHModelNS::GetModelMeta< T >().name << ">.FromReqJsonParam";
+        std::string scopeStr( scopeOss.str() );
+        wsUtilLogSetScope( scopeStr.c_str() );
+
         std::string requestParamJsonStr;
 
         if ( isGet )
@@ -71,7 +85,12 @@ namespace LHWSModelApiNS
 
                 if ( rawPostData.first && rawPostData.second )
                 {
+                    wsUtilLogDebug( "setting param json to raw post data of size " << rawPostData.second );
                     requestParamJsonStr.assign( static_cast<char*>( rawPostData.first ), rawPostData.second );
+                }
+                else
+                {
+                    wsUtilLogDebug( "raw post data is empty" );
                 }
             }
             else
@@ -84,7 +103,7 @@ namespace LHWSModelApiNS
         {
             std::ostringstream oss;
             oss << "Missing " << ( isGet ? "GET" : "POST" ) << " parameter[" << paramName << "]";
-            throw ApiException( 1, oss.str() );
+            throw ApiException( 400, oss.str() );
         }
 
         return FromJsonStr( requestParamJsonStr );
@@ -101,7 +120,7 @@ namespace LHWSModelApiNS
 
         if ( !( jsonStrBuffer.GetString() ) )
         {
-            throw ApiException( 2, "Failed to serialize response as JSON" );
+            throw ApiException( 400, "Failed to serialize response as JSON" );
         }
 
         cppcmsResponse.content_type( "application/json" );

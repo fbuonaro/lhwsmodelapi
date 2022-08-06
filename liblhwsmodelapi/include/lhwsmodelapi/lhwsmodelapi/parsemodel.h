@@ -92,7 +92,7 @@ namespace LHWSModelApiNS
                 {
                     wsUtilLogDebug(
                         "raw post for t=[" << LHModelNS::GetModelMeta< T >().name
-                        << "data is empty" );
+                        << "] data is empty" );
                 }
             }
             else

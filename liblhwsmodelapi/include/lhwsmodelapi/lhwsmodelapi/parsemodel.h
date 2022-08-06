@@ -34,10 +34,7 @@ namespace LHWSModelApiNS
     template< class T >
     T ParseModel< T >::FromJsonStr( const std::string& requestParamJsonStr )
     {
-        std::ostringstream scopeOss;
-        scopeOss << "ParseModel<" << LHModelNS::GetModelMeta< T >().name << ">.FromJsonStr";
-        std::string scopeStr( scopeOss.str() );
-        wsUtilLogSetScope( scopeStr.c_str() );
+        wsUtilLogSetScope( "ParseModel.FromJsonStr" );
 
         rapidjson::Document requestParamJson;
         rapidjson::ParseResult parsedOkay;
@@ -46,7 +43,9 @@ namespace LHWSModelApiNS
         parsedOkay = requestParamJson.Parse( requestParamJsonStr.c_str() );
         if ( !( parsedOkay ) )
         {
-            oss << "JSON parse error: " << rapidjson::GetParseError_En( parsedOkay.Code() ) << " " << parsedOkay.Offset();
+            oss << "JSON parse error for t=["
+                << LHModelNS::GetModelMeta< T >().name
+                << "]: " << rapidjson::GetParseError_En( parsedOkay.Code() ) << " " << parsedOkay.Offset();
             wsUtilLogError( oss.str() );
             throw ApiException( 400, oss.str() );
         }
@@ -54,7 +53,9 @@ namespace LHWSModelApiNS
         T requestModel;
         if ( !( LHModelUtilNS::DeserializeValue( requestModel, requestParamJson, &oss, true ) ) )
         {
-            wsUtilLogError( oss.str() );
+            wsUtilLogError(
+                "t=[" << LHModelNS::GetModelMeta< T >().name
+                << "] " << oss.str() );
             throw ApiException( 400, oss.str() );
         }
 
@@ -66,10 +67,7 @@ namespace LHWSModelApiNS
         bool isGet,
         const std::string& paramName )
     {
-        std::ostringstream scopeOss;
-        scopeOss << "ParseModel<" << LHModelNS::GetModelMeta< T >().name << ">.FromReqJsonParam";
-        std::string scopeStr( scopeOss.str() );
-        wsUtilLogSetScope( scopeStr.c_str() );
+        wsUtilLogSetScope( "ParseModel.FromReqJsonParam" );
 
         std::string requestParamJsonStr;
 
@@ -85,12 +83,16 @@ namespace LHWSModelApiNS
 
                 if ( rawPostData.first && rawPostData.second )
                 {
-                    wsUtilLogDebug( "setting param json to raw post data of size " << rawPostData.second );
+                    wsUtilLogDebug(
+                        "setting param for t=[" << LHModelNS::GetModelMeta< T >().name
+                        << "] json to raw post data of size " << rawPostData.second );
                     requestParamJsonStr.assign( static_cast<char*>( rawPostData.first ), rawPostData.second );
                 }
                 else
                 {
-                    wsUtilLogDebug( "raw post data is empty" );
+                    wsUtilLogDebug(
+                        "raw post for t=[" << LHModelNS::GetModelMeta< T >().name
+                        << "data is empty" );
                 }
             }
             else

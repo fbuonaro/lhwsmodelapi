@@ -15,20 +15,20 @@ namespace LHWSModelApiNS
     template< class T >
     class ApiRequestModelContext
     {
-        public:
-            ApiRequestModelContext( T _requestModel, std::unique_ptr< IApiContext > _context );
+    public:
+        ApiRequestModelContext( T _requestModel, std::unique_ptr< IApiContext > _context );
 
-            const T& GetRequestModel() const;
+        const T& GetRequestModel() const;
 
-            const IApiContext& GetContext() const;
+        const IApiContext& GetContext() const;
 
-            static ApiRequestModelContext< T > FromApplication( cppcms::application& cppcmsApplication,
-                                                                const GetApiContextParams& params );
+        static ApiRequestModelContext< T > FromApplication( cppcms::application& cppcmsApplication,
+            const GetApiContextParams& params );
 
-        private:
+    private:
 
-            T requestModel;
-            std::unique_ptr< IApiContext > context;
+        T requestModel;
+        std::unique_ptr< IApiContext > context;
     };
 
     template< class T >
@@ -40,21 +40,21 @@ namespace LHWSModelApiNS
     template< class T >
     const IApiContext& ApiRequestModelContext< T >::GetContext() const
     {
-        if( !( context ) )
+        if ( !( context ) )
         {
             throw std::runtime_error( "context is null" );
         }
 
         return *context;
     }
-    
+
     template< class T >
     ApiRequestModelContext< T >::ApiRequestModelContext( T _requestModel,
-                                                         std::unique_ptr< IApiContext > _context )
-    :   requestModel( std::move( _requestModel ) )
-    ,   context( std::move( _context ) )
+        std::unique_ptr< IApiContext > _context )
+        : requestModel( std::move( _requestModel ) )
+        , context( std::move( _context ) )
     {
-        if( !( context ) )
+        if ( !( context ) )
         {
             throw std::runtime_error( "provided context is null" );
         }
@@ -62,11 +62,11 @@ namespace LHWSModelApiNS
 
     template< class T >
     ApiRequestModelContext< T > ApiRequestModelContext< T >::FromApplication( cppcms::application& cppcmsApplication,
-                                                                              const GetApiContextParams& params )
+        const GetApiContextParams& params )
     {
-        T requestModel( ParseModel< T >::FromReqJsonParam( cppcmsApplication.request(),
-                                                           params.isGet,
-                                                           params.paramName ) );
+        T requestModel( ParseModel< T >::FromReqParam( cppcmsApplication.request(),
+            params.isGet,
+            params.paramName ) );
 
         auto apiContext( GetApiContext( cppcmsApplication, params ) );
 

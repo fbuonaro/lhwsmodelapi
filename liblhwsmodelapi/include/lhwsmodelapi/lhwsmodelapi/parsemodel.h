@@ -12,6 +12,7 @@
 #include <rapidjson/error/en.h>
 
 #include <lhmodelutil/lhmodel_rapidjson.h>
+#include <lhmodelutil/lhmodel_multimap_visitor.h>
 
 #include <lhwsutil/logging.h>
 
@@ -23,7 +24,7 @@ namespace LHWSModelApiNS
     public:
         static T FromJsonStr( const std::string& requestParamJsonStr );
 
-        static T FromReqJsonParam( cppcms::http::request& cppcmsRequest,
+        static T FromReqParam( cppcms::http::request& cppcmsRequest,
             bool isGet,
             const std::string& paramName );
 
@@ -63,11 +64,11 @@ namespace LHWSModelApiNS
     }
 
     template< class T >
-    T ParseModel< T >::FromReqJsonParam( cppcms::http::request& cppcmsRequest,
+    T ParseModel< T >::FromReqParam( cppcms::http::request& cppcmsRequest,
         bool isGet,
         const std::string& paramName )
     {
-        wsUtilLogSetScope( "ParseModel.FromReqJsonParam" );
+        wsUtilLogSetScope( "ParseModel.FromReqParam" );
 
         std::string requestParamJsonStr;
 
@@ -86,13 +87,24 @@ namespace LHWSModelApiNS
                     wsUtilLogDebug(
                         "setting param for t=[" << LHModelNS::GetModelMeta< T >().name
                         << "] json to raw post data of size " << rawPostData.second );
+
                     requestParamJsonStr.assign( static_cast<char*>( rawPostData.first ), rawPostData.second );
                 }
                 else
                 {
-                    wsUtilLogDebug(
-                        "raw post for t=[" << LHModelNS::GetModelMeta< T >().name
-                        << "] data is empty" );
+                    if ( !( cppcmsRequest.post().empty() ) )
+                    {
+                        wsUtilLogDebug(
+                            "raw post for t=[" << LHModelNS::GetModelMeta< T >().name
+                            << "] data is empty, using post" );
+
+                        // TODO - enhance mm deserialize to do some amount of error checking
+
+                        T requestModel;
+                        LHModelUtilNS::DeserializeFromMultiMap( requestModel, cppcmsRequest.post() );
+                        return requestModel;
+                    }
+                    // else fall through to some type of error
                 }
             }
             else

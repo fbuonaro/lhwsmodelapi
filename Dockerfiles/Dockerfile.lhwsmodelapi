@@ -1,0 +1,125 @@
+################################################################################## 
+# STAGE 0 - base environment with first set of runtime dependencies 
+##################################################################################
+ARG BUILD_TAG
+ARG GIT_COMMIT
+
+FROM centos:centos7 as lhwsmodelapi-base-env
+
+# okay repo is for gtest/gmock 1.8, 1.6 is permanently broken
+RUN yum -y --enablerepo=extras install epel-release && \
+    yum -y install https://repo.ius.io/ius-release-el7.rpm && \
+    yum -y install http://repo.okay.com.mx/centos/7/x86_64/release/okay-release-1-5.el7.noarch.rpm && \
+    yum clean all
+
+##################################################################################
+# STAGE 1 - build tools and libraries needed to build lhwsmodelapi
+##################################################################################
+### deps ###
+FROM lhmodel:dist-${BUILD_TAG} AS lhmodel_dist_build
+FROM lhmiscutil:dist-${BUILD_TAG} AS lhmiscutil_dist_build
+FROM lhwsutil:dist-${BUILD_TAG} AS lhwsutil_dist_build
+FROM libcppcms-lhdist:dist-${BUILD_TAG} AS libcppcms_lhdist_dist_build
+### deps ###
+FROM lhwsmodelapi-base-env as lhwsmodelapi-build-env
+
+# for compiling and unit testing
+# x86_64 versions from okay repo for gmock/gtest 1.8
+# TODO - remove curl/openssl-devel when devel deps are added to other libraries
+RUN yum -y install \
+        cmake3 \
+        make \
+        gcc \
+        gcc-c++ \
+        gtest-devel.x86_64 \
+        gmock-devel.x86_64 \
+        openssl-devel \
+        curl-devel \
+        boost169-devel \
+        rpm-build && \
+    yum clean all
+
+ADD ./modules/lhscriptutil/scripts/refreshOrSetupLHDistYumRepo.sh /refreshOrSetupLHDistYumRepo.sh
+RUN /refreshOrSetupLHDistYumRepo.sh
+
+COPY --from=lhmodel_dist_build /lhdist/*.rpm /lhdist/
+COPY --from=lhmiscutil_dist_build /lhdist/*.rpm /lhdist/
+COPY --from=lhwsutil_dist_build /lhdist/*.rpm /lhdist/
+COPY --from=libcppcms_lhdist_dist_build /lhdist/*.rpm /lhdist/
+RUN /refreshOrSetupLHDistYumRepo.sh
+
+RUN yum -y repo-pkgs lhdistrepo install && \
+    ldconfig && \
+    yum clean all
+
+ENTRYPOINT [ "bash" ]
+
+##################################################################################
+# STAGE 2 - the lhwsmodelapi source and compiled binaries
+##################################################################################
+FROM lhwsmodelapi-build-env as lhwsmodelapi-build
+
+ADD . /lhwsmodelapi
+RUN cd /lhwsmodelapi && \
+    mkdir ./build && \
+    cd ./build && \
+    cmake3 \
+        -DBOOST_INCLUDEDIR=/usr/include/boost169 \
+        -DBOOST_LIBRARYDIR=/usr/lib64/boost169 \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCPACK_PACKAGE_DIRECTORY=/lhdist \
+        ../ && \
+    make && \
+    make test && \
+    make package && \
+    /refreshOrSetupLHDistYumRepo.sh
+
+ENV BUILD_TAG=${BUILD_TAG}
+LABEL build_tag="${BUILD_TAG}"
+ENV GIT_COMMIT=${GIT_COMMIT}
+LABEL git_commit="${GIT_COMMIT}"
+
+##################################################################################
+# STAGE 3 - the base image with additional built runtime dependencies, lhwsmodelapi 
+#           binaries and test binaries needed for running integration tests
+#           includes everything from build-env
+##################################################################################
+FROM lhwsmodelapi-build as lhwsmodelapi-test-env
+
+RUN cd /lhwsmodelapi/build && \
+    make install && \
+    ldconfig
+
+##################################################################################
+# STAGE 4 - the base image with additional built runtime dependencies and 
+#           lhwsmodelapi binaries includes nothing from build-env
+##################################################################################
+FROM lhwsmodelapi-base-env as lhwsmodelapi-main
+
+COPY --from=lhwsmodelapi-build /usr/ /usr/
+COPY --from=lhwsmodelapi-build /etc/ /etc/
+COPY --from=lhwsmodelapi-build /lhwsmodelapi/ /lhwsmodelapi/
+RUN cd /lhwsmodelapi/build && \
+    make install && \
+    make package && \
+    ldconfig && \
+    cd / && \
+    rm -rf /lhwsmodelapi
+
+##################################################################################
+# STAGE 5 - the base image with additional built runtime dependencies and 
+#           lhwsmodelapi binaries includes nothing from build-env
+##################################################################################
+FROM lhwsmodelapi-base-env as lhwsmodelapi-dist-test
+
+COPY --from=lhwsmodelapi-build /lhdist/ /lhdist/
+ADD ./modules/lhscriptutil/scripts/refreshOrSetupLHDistYumRepo.sh /refreshOrSetupLHDistYumRepo.sh
+RUN /refreshOrSetupLHDistYumRepo.sh
+RUN yum -y repo-pkgs lhdistrepo install && \
+    ldconfig && \
+    yum clean all
+
+FROM lhwsmodelapi-base-env as lhwsmodelapi-dist
+
+COPY --from=lhwsmodelapi-dist-test /lhdist/ /lhdist/

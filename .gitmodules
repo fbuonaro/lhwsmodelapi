@@ -1,15 +1,15 @@
 [submodule "modules/lhwsutil"]
 	path = modules/lhwsutil
 	url = https://github.com/fbuonaro/lhwsutil.git
-	branch = cpack-rpm-lhdist
+	branch = master
 [submodule "modules/lhmodel"]
 	path = modules/lhmodel
 	url = https://github.com/fbuonaro/lhmodel.git
-	branch = cpack-rpm-lhdist
+	branch = master
 [submodule "modules/lhmiscutil"]
 	path = modules/lhmiscutil
 	url = https://github.com/fbuonaro/lhmiscutil.git
-	branch = cpack-rpm-lhdist
+	branch = master
 [submodule "modules/lhscriptutil"]
 	path = modules/lhscriptutil
 	url = https://github.com/fbuonaro/lhscriptutil.git

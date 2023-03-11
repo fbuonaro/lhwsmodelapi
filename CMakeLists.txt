@@ -8,4 +8,10 @@ project( lhwsmodelapi
 
 enable_testing()
 
-add_subdirectory( liblhwsmodelapi )
+set(LH_SUBDIRECTORIES liblhwsmodelapi)
+
+include("modules/lhscriptutil/cmake/lhmacros.cmake")
+
+lh_toplevel_add_subdirectories()
+
+lh_toplevel_add_cpack_package_components()

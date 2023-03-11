@@ -21,10 +21,12 @@ add_compile_options( -Wall -Wextra -pedantic -Werror -DBOOST_LOG_DYN_LINK)
 # library
 ##############################################################
 
+set( LH_LIB_NAME lhwsmodelapi )
+
 # install directories
-set( INSTALL_BINDIR "${CMAKE_INSTALL_BINDIR}" )
-set( INSTALL_LIBDIR "${CMAKE_INSTALL_LIBDIR}/liblhwsmodelapi_${PROJECT_VERSION}" )
-set( INSTALL_INCDIR "${CMAKE_INSTALL_INCLUDEDIR}/lhwsmodelapi_${PROJECT_VERSION}" )
+set( LH_INSTALL_BINDIR "${CMAKE_INSTALL_BINDIR}" )
+set( LH_INSTALL_LIBDIR "${CMAKE_INSTALL_LIBDIR}/liblhwsmodelapi_${PROJECT_VERSION}" )
+set( LH_INSTALL_INCDIR "${CMAKE_INSTALL_INCLUDEDIR}/lhwsmodelapi_${PROJECT_VERSION}" )
 
 # pull in liblhmodel
 find_package( liblhmodel REQUIRED )
@@ -40,60 +42,31 @@ find_package( Boost 1.69 COMPONENTS log REQUIRED )
 # TODO find_package cppcms
 
 # source files
-set( LIB_SRC_FILES 
+set( LH_LIB_SRC_FILES 
     "src/apicontext.cxx"
     "src/apierror.cxx"
     "src/apiexception.cxx"
     "src/iapicontext.cxx" )
 
 # library dependencies
-set( LIB_PUBLIC_LINKLIBS 
+set( LH_LIB_PUBLIC_LINKLIBS 
     "${Boost_LIBRARIES}"
      liblhmodel::lhmodel 
      liblhmodelutil::lhmodelutil
      liblhwsutil::lhwsutil 
      liblhmiscutil::lhmiscutil 
      cppcms )
-set( LIB_PRIVATE_LINKLIBS )
+set( LH_LIB_PRIVATE_LINKLIBS )
 # header dependencies
-set( LIB_PUBLIC_INCLUDES 
+set( LH_LIB_PUBLIC_INCLUDES 
     "${Boost_INCLUDE_DIR}"
      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/lhwsmodelapi>   # build
-     $<INSTALL_INTERFACE:${INSTALL_INCDIR}> )                               # export
-set( LIB_PRIVATE_INCLUDES 
+     $<INSTALL_INTERFACE:${LH_INSTALL_INCDIR}> )                               # export
+set( LH_LIB_PRIVATE_INCLUDES 
      "${CMAKE_CURRENT_SOURCE_DIR}/include/lhwsmodelapi_impl"
      "${CMAKE_CURRENT_BINARY_DIR}" )
 
-# boilerplate ..
-# libs
-add_library( lhwsmodelapi SHARED ${LIB_SRC_FILES} )
-add_library( lhwsmodelapi_static STATIC ${LIB_SRC_FILES} )
-# lib deps
-target_link_libraries( lhwsmodelapi
-                       PUBLIC "${LIB_PUBLIC_LINKLIBS}"
-                       PRIVATE "${LIB_PRIVATE_LINKLIBS}" )
-target_link_libraries( lhwsmodelapi_static
-                       PUBLIC "${LIB_PUBLIC_LINKLIBS}"
-                       PRIVATE "${LIB_PRIVATE_LINKLIBS}" )
-# header deps
-target_include_directories( lhwsmodelapi
-                            PUBLIC "${LIB_PUBLIC_INCLUDES}"
-                            PRIVATE "${LIB_PRIVATE_INCLUDES}" )
-target_include_directories( lhwsmodelapi_static
-                            PUBLIC "${LIB_PUBLIC_INCLUDES}"
-                            PRIVATE "${LIB_PRIVATE_INCLUDES}" )
-# properties
-set_target_properties( lhwsmodelapi
-                       PROPERTIES 
-                           LIBRARY_OUTPUT_DIRECTORY "${INSTALL_LIBDIR}"
-                           SOVERSION ${PROJECT_VERSION}
-                           VERSION ${PROJECT_VERSION}
-                           CLEAN_DIRECT_OUTPUT 1)
-set_target_properties( lhwsmodelapi_static 
-                       PROPERTIES
-                           ARCHIVE_OUTPUT_DIRECTORY "${INSTALL_LIBDIR}"
-                           OUTPUT_NAME lhwsmodelapi )
-# .. boilerplate
+lh_add_library()
 
 ##############################################################
 # unit tests
@@ -126,44 +99,18 @@ gtest_add_tests( TARGET testlhwsmodelapi )
 # installation
 ##############################################################
 
-# boilerplate ..
-# install lib/bin
-install( TARGETS lhwsmodelapi lhwsmodelapi_static
-         EXPORT liblhwsmodelapi-targets 
-         COMPONENT liblhwsmodelapi
-         RUNTIME DESTINATION "${INSTALL_BINDIR}"
-         COMPONENT liblhwsmodelapi
-         LIBRARY DESTINATION "${INSTALL_LIBDIR}"
-         COMPONENT liblhwsmodelapi
-         ARCHIVE DESTINATION "${INSTALL_LIBDIR}"
-         COMPONENT liblhwsmodelapi
-         INCLUDES DESTINATION "${LIB_PUBLIC_INCLUDES}" )
-# install header dir
-install( DIRECTORY "include/lhwsmodelapi/lhwsmodelapi"
-         DESTINATION "${INSTALL_INCDIR}"
-         COMPONENT liblhwsmodelapi
-         FILES_MATCHING PATTERN "*.h" )
-# install export for things outside of build
-install( EXPORT liblhwsmodelapi-targets 
-         FILE liblhwsmodelapiTargets.cmake 
-         NAMESPACE liblhwsmodelapi:: 
-         DESTINATION "${INSTALL_LIBDIR}/cmake" 
-         COMPONENT liblhwsmodelapi )
-# export export for things in build
-export( EXPORT liblhwsmodelapi-targets
-    FILE ${CMAKE_BINARY_DIR}/cmake/liblhwsmodelapiTargets.cmake 
-    NAMESPACE liblhwsmodelapi:: )
-ADD_CUSTOM_TARGET( install-lhwsmodelapi
-                   ${CMAKE_COMMAND}
-                   -D "CMAKE_INSTALL_COMPONENT=liblhwsmodelapi"
-                   -P "cmake_install.cmake" )
-# .. boilerplate
+# name of component to install
+set(LH_COMPONENT_NAME liblhwsmodelapi )
+# directories to install
+set(LH_LIB_PUBLIC_INCLUDE_DIRS "include/lhwsmodelapi/lhwsmodelapi")
+
+lh_add_install_library()
 
 ##############################################################
 # pkg-config
 ##############################################################
-set( PC_INCDIR "${INSTALL_INCDIR}")
-set( PC_LIBDIR "${INSTALL_LIBDIR}")
+set( PC_INCDIR "${LH_INSTALL_INCDIR}")
+set( PC_LIBDIR "${LH_INSTALL_LIBDIR}")
 set( PC_PUBREQS )
 set( PC_PRIVREQS )
 set( PC_CFLAGS "-DBOOST_LOG_DYN_LINK")
@@ -174,68 +121,22 @@ set( PC_INSTALL_FILENAME "${PROJECT_NAME}-${CMAKE_PROJECT_VERSION_MAJOR}.pc" )
 set( PC_INSTALL_FILE "${PC_INSTALL_DIR}/${PC_INSTALL_FILENAME}" )
 set( PC_RELOCATE_SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/rpm_relocate_pc.sh" )
 
-# boilerplate ..
-# configure pc file
-configure_file( "${CMAKE_SOURCE_DIR}/modules/lhscriptutil/cmake/pkgconfig/component.pc.in"
-                "${CMAKE_CURRENT_BINARY_DIR}/${PC_INSTALL_FILENAME}"
-                @ONLY )
-# install pc file
-install( FILES "${CMAKE_CURRENT_BINARY_DIR}/${PC_INSTALL_FILENAME}"
-         DESTINATION "${PC_INSTALL_DIR}"
-         COMPONENT liblhwsmodelapi )
-# configure pc relocation script
-configure_file( "${CMAKE_SOURCE_DIR}/modules/lhscriptutil/cmake/pkgconfig/rpm_relocate_pc.sh.in"
-                "${CMAKE_CURRENT_BINARY_DIR}/rpm_relocate_pc.sh"
-                @ONLY )
-# .. boilerplate
+lh_add_pkgconfig()
 
 ##############################################################
 # cmake packaging
 ##############################################################
 
-# boilerplate ..
-include(CMakePackageConfigHelpers)
-
-configure_package_config_file( "${CMAKE_CURRENT_SOURCE_DIR}/cmake/${PROJECT_NAME}Config.cmake.in"
-                               "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-                               INSTALL_DESTINATION "${INSTALL_LIBDIR}/cmake" )
-
-write_basic_package_version_file( "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
-                                  VERSION "${PROJECT_VERSION}"
-                                  COMPATIBILITY SameMajorVersion )
-
-install( FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake" "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
-         DESTINATION "${INSTALL_LIBDIR}/cmake"
-         COMPONENT liblhwsmodelapi )
-# .. boilerplate
+lh_add_install_cmake_config()
 
 ##############################################################
 # rpm packaging
 ##############################################################
  
-# boilerplate ..
-set( CPACK_PROJECT_NAME ${PROJECT_NAME} )
-set( CPACK_PROJECT_VERSION ${PROJECT_VERSION} )
-set( CPACK_COMPONENTS_GROUPING ONE_PER_GROUP )
-set( CPACK_GENERATOR "RPM" )
-
-# set( CPACK_GENERATOR "RPM" "TGZ" )
-# CPACK_RPM_BUILD_REQUIRES
-# CPACK_RPM_liblhmodeldbutil_REQUIRES # component requires
-
-set( CPACK_RPM_PACKAGE_RELOCATABLE ON)
-set( CPACK_RPM_COMPONENT_INSTALL ON )
-
 # to relocate the pc file prefix to /somewhere if 'rpm --install --prefix /somewhere'
-set( CPACK_RPM_PACKAGE_REQUIRES_POST "sed" ) 
-set( CPACK_RPM_POST_INSTALL_SCRIPT_FILE "${PC_RELOCATE_SCRIPT}" )
+set( CPACK_RPM_LIBLHMODELDBTEST_PACKAGE_REQUIRES_POST "sed" PARENT_SCOPE) 
+set( CPACK_RPM_LIBLHMODELDBTEST_POST_INSTALL_SCRIPT_FILE "${PC_RELOCATE_SCRIPT}" PARENT_SCOPE)
 
-include( CPack )
+set(LH_PACKAGE_DESC "liblhwsmodelapi libraries package")
 
-# component, group can be different; group will appended to package
-cpack_add_component(liblhwsmodelapi
-    DISPLAY_NAME  "lhwsmodelapi library"
-    DESCRIPTION   "lhwsmodelapi library"
-    GROUP liblhwsmodelapi)
-cpack_add_component_group(liblhwsmodelapi)
-# .. boilerplate
+lh_add_cpack_component()

@@ -13,7 +13,13 @@ RUN yum -y --enablerepo=extras install epel-release && \
 ##################################################################################
 # STAGE 1 - build tools and libraries needed to build libcppcms
 ##################################################################################
+### deps ###
+FROM lhscriptutil:dist-${BUILD_TAG} AS lhscriptutil_dist_build
+### deps ###
+
 FROM libcppcms-lhdist-base-env as libcppcms-lhdist-build-env
+
+COPY --from=lhscriptutil_dist_build /lhscriptutil/ /lhscriptutil/
 
 # for compiling and unit testing
 RUN yum -y install \
@@ -47,12 +53,11 @@ FROM libcppcms-lhdist-build-env as libcppcms-lhdist-build
 
 RUN mkdir -p /libcppcms-lhdist
 
-ADD ./modules/lhscriptutil/scripts/rpmdev-setuptree-at.sh /libcppcms-lhdist
 ADD ./dist/libcppcms-lhdist.spec /libcppcms-lhdist
 
 RUN cd /libcppcms-lhdist && \
     mkdir build && \
-    ./rpmdev-setuptree-at.sh ./build && \
+    /lhscriptutil/scripts/rpmdev-setuptree-at.sh ./build && \
     rpmbuild --define "_topdir ${PWD}/build"  -ba ./libcppcms-lhdist.spec && \
     mkdir -p /lhdist && \
     find ./build/RPMS/ | grep "\.rpm" | xargs -I{} cp -f -u {} /lhdist
@@ -67,8 +72,9 @@ LABEL git_commit="${GIT_COMMIT}"
 ##################################################################################
 FROM libcppcms-lhdist-build-env as libcppcms-lhdist-check
 
-ADD ./modules/lhscriptutil/scripts/refreshOrSetupLHDistYumRepo.sh /refreshOrSetupLHDistYumRepo.sh
-RUN /refreshOrSetupLHDistYumRepo.sh
+COPY --from=libcppcms-lhdist-build /lhdist/ /lhdist/
+COPY --from=libcppcms-lhdist-build-env /lhscriptutil/ /lhscriptutil/
+RUN /lhscriptutil/scripts/refreshOrSetupLHDistYumRepo.sh
 RUN yum -y repo-pkgs lhdistrepo install && \
     yum clean all
 
@@ -77,4 +83,4 @@ RUN yum -y repo-pkgs lhdistrepo install && \
 ##################################################################################
 FROM libcppcms-lhdist-base-env as libcppcms-lhdist-dist
 
-COPY --from=libcppcms-lhdist-build /lhdist /lhdist
+COPY --from=libcppcms-lhdist-check /lhdist /lhdist

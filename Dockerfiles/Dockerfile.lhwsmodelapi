@@ -16,6 +16,7 @@ RUN yum -y --enablerepo=extras install epel-release && \
 # STAGE 1 - build tools and libraries needed to build lhwsmodelapi
 ##################################################################################
 ### deps ###
+FROM lhscriptutil:dist-${BUILD_TAG} AS lhscriptutil_dist_build
 FROM lhmodel:dist-${BUILD_TAG} AS lhmodel_dist_build
 FROM lhmiscutil:dist-${BUILD_TAG} AS lhmiscutil_dist_build
 FROM lhwsutil:dist-${BUILD_TAG} AS lhwsutil_dist_build
@@ -39,14 +40,14 @@ RUN yum -y install \
         rpm-build && \
     yum clean all
 
-ADD ./modules/lhscriptutil/scripts/refreshOrSetupLHDistYumRepo.sh /refreshOrSetupLHDistYumRepo.sh
-RUN /refreshOrSetupLHDistYumRepo.sh
+COPY --from=lhscriptutil_dist_build /lhscriptutil/ /lhscriptutil/
+RUN /lhscriptutil/scripts/refreshOrSetupLHDistYumRepo.sh
 
 COPY --from=lhmodel_dist_build /lhdist/*.rpm /lhdist/
 COPY --from=lhmiscutil_dist_build /lhdist/*.rpm /lhdist/
 COPY --from=lhwsutil_dist_build /lhdist/*.rpm /lhdist/
 COPY --from=libcppcms_lhdist_dist_build /lhdist/*.rpm /lhdist/
-RUN /refreshOrSetupLHDistYumRepo.sh
+RUN /lhscriptutil/scripts/refreshOrSetupLHDistYumRepo.sh
 
 RUN yum -y repo-pkgs lhdistrepo install && \
     ldconfig && \
@@ -73,7 +74,7 @@ RUN cd /lhwsmodelapi && \
     make && \
     make test && \
     make package && \
-    /refreshOrSetupLHDistYumRepo.sh
+    /lhscriptutil/scripts/refreshOrSetupLHDistYumRepo.sh
 
 ENV BUILD_TAG=${BUILD_TAG}
 LABEL build_tag="${BUILD_TAG}"
@@ -97,29 +98,17 @@ RUN cd /lhwsmodelapi/build && \
 ##################################################################################
 FROM lhwsmodelapi-base-env as lhwsmodelapi-main
 
-COPY --from=lhwsmodelapi-build /usr/ /usr/
-COPY --from=lhwsmodelapi-build /etc/ /etc/
-COPY --from=lhwsmodelapi-build /lhwsmodelapi/ /lhwsmodelapi/
-RUN cd /lhwsmodelapi/build && \
-    make install && \
-    make package && \
+COPY --from=lhwsmodelapi-build /lhdist/ /lhdist/
+COPY --from=lhwsmodelapi-build-env /lhscriptutil/ /lhscriptutil/
+RUN /lhscriptutil/scripts/refreshOrSetupLHDistYumRepo.sh
+RUN yum -y repo-pkgs lhdistrepo install && \
     ldconfig && \
-    cd / && \
-    rm -rf /lhwsmodelapi
+    yum clean all
 
 ##################################################################################
 # STAGE 5 - the base image with additional built runtime dependencies and 
 #           lhwsmodelapi binaries includes nothing from build-env
 ##################################################################################
-FROM lhwsmodelapi-base-env as lhwsmodelapi-dist-test
-
-COPY --from=lhwsmodelapi-build /lhdist/ /lhdist/
-ADD ./modules/lhscriptutil/scripts/refreshOrSetupLHDistYumRepo.sh /refreshOrSetupLHDistYumRepo.sh
-RUN /refreshOrSetupLHDistYumRepo.sh
-RUN yum -y repo-pkgs lhdistrepo install && \
-    ldconfig && \
-    yum clean all
-
 FROM lhwsmodelapi-base-env as lhwsmodelapi-dist
 
-COPY --from=lhwsmodelapi-dist-test /lhdist/ /lhdist/
+COPY --from=lhwsmodelapi-main /lhdist/ /lhdist/
